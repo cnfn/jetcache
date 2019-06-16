@@ -7,6 +7,7 @@ import com.alicp.jetcache.anno.method.CacheHandler;
 import com.alicp.jetcache.anno.method.CacheInvokeConfig;
 import com.alicp.jetcache.anno.method.CacheInvokeContext;
 import com.alicp.jetcache.anno.support.ConfigMap;
+import com.alicp.jetcache.anno.support.ConfigProvider;
 import com.alicp.jetcache.anno.support.GlobalCacheConfig;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
@@ -25,16 +26,21 @@ public class JetCacheInterceptor implements MethodInterceptor, ApplicationContex
 
     private ConfigMap cacheConfigMap;
     private ApplicationContext applicationContext;
-    GlobalCacheConfig globalCacheConfig;
+    private GlobalCacheConfig globalCacheConfig;
+    ConfigProvider configProvider;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 
+    @Override
     public Object invoke(final MethodInvocation invocation) throws Throwable {
-        if (globalCacheConfig == null) {
-            globalCacheConfig = applicationContext.getBean(GlobalCacheConfig.class);
+        if (configProvider == null) {
+            configProvider = applicationContext.getBean(ConfigProvider.class);
+        }
+        if (configProvider != null && globalCacheConfig == null) {
+            globalCacheConfig = configProvider.getGlobalCacheConfig();
         }
         if (globalCacheConfig == null || !globalCacheConfig.isEnableMethodCache()) {
             return invocation.proceed();
@@ -62,7 +68,7 @@ public class JetCacheInterceptor implements MethodInterceptor, ApplicationContex
             return invocation.proceed();
         }
 
-        CacheInvokeContext context = globalCacheConfig.getCacheContext().createCacheInvokeContext(cacheConfigMap);
+        CacheInvokeContext context = configProvider.getCacheContext().createCacheInvokeContext(cacheConfigMap);
         context.setTargetObject(invocation.getThis());
         context.setInvoker(invocation::proceed);
         context.setMethod(method);

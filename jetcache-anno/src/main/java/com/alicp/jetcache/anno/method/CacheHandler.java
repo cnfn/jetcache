@@ -29,7 +29,7 @@ public class CacheHandler implements InvocationHandler {
     private static class CacheContextSupport extends CacheContext {
 
         public CacheContextSupport() {
-            super(null);
+            super(null, null);
         }
 
         static void _enable() {
@@ -52,6 +52,7 @@ public class CacheHandler implements InvocationHandler {
         this.hiddenPackages = hiddenPackages;
     }
 
+    @Override
     public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
         CacheInvokeContext context = null;
 
